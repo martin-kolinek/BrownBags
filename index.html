@@ -4,7 +4,7 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>reveal.js - The HTML Presentation Framework</title>
+		<title>Monads</title>
 
 		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
 		<meta name="author" content="Hakim El Hattab">
@@ -40,6 +40,122 @@
 
 			<!-- Any section element inside of this container is displayed as a slide -->
 			<div class="slides">
+                <section>
+                    <h1>Monads</h1>
+                </section>
+                <section>
+                    <h2>Category theory</h2>
+                    <blockquote>
+                        A monad is just a monoid in the category of endofunctors, what's the problem?
+                    </blockquote>
+                    <p class="fragment" data-fragment-index="1">
+                    Or more precisely
+                    </p>
+                    <blockquote class="fragment" data-fragment-index="1">
+                        All told, a monad in X is just a monoid in the category of endofunctors of X, with product × replaced by composition of endofunctors and unit set by the identity endofunctor.
+                    </blockquote>
+                    <a class="fragment" href="http://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">Category theory for programmers</a>
+                </section>
+                <section>
+                    <h2>Common definition</h2>
+                    <pre><code class="haskell" data-trim>
+class Monad m where  
+    return :: a -> m a  
+    (>>=) :: m a -> (a -> m b) -> m b
+                    </code></pre>
+                    and laws
+                    <pre><code class="haskell" data-trim>
+(return x >>= f) = (f x)
+(m >>= return) = m
+((m >>= f) >>= g) = (m >>= (\x -> f x >>= g))
+                    </code></pre>
+                </section>
+                <section>
+                    <section>
+                        <h3>First some Haskell</h3>
+                        Functions
+                        <pre><code class="haskell" data-trim contenteditable>
+next :: Int -> Int
+next i = i + 1
+                        </code></pre>
+                        <pre class="fragment" data-fragment-index="1"><code class="haskell" data-trim contenteditable>
+ackermann :: Int -> Int -> Int
+ackermann 0 n = n + 1
+ackermann m 0 = ackermann (m - 1) 1
+ackermann m n = ackermann (m - 1) (ackermann m (n - 1))
+                        </pre></code>
+                        <p class="fragment" data-fragment-index="2">Data types</p>
+                        <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim contenteditable>
+data Animal = Cat | Dog | Dragon Int
+
+sound :: Animal -> String
+sound Cat = "Meow"
+sound Dog = "Bark"
+sound (Dragon heads) = intercalate " " (replicate heads "Roar")
+                        </pre></code>
+                        <aside class="notes">
+                            Question: Why does Int -> Int -> Int make sense?
+                            Exercise: Add pokemon (they say their name)
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Simulating classes</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+class Thing
+{
+    public int Get()
+    {
+        return 1;
+    }
+}
+                        </code></pre>
+                        <pre class="fragment" data-fragment-index="1"><code class="haskell" data-trim contenteditable>
+data Thing = Thing
+
+get :: Thing -> Int
+get Thing = 1
+                        </code></pre>
+                        <aside class="notes">
+                            Question: Why is there data Thing = Thing? <br/>
+                            Exercise: Add parameter to the get method
+                            Exercise: Put the returned value into constructor
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Simulating interfaces</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+interface Interface
+{
+    int Get();
+}
+
+class Class : Interface
+{
+    int Get() { return 1; }
+}
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+class Interface c where
+    get :: c -> Int
+    
+data Class = Class
+
+instance Interface Class where
+    get Class = 1
+                        </code></pre>
+                        <aside class="notes">
+                            Exercise: Add parameter to the get method
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <h3>What do these have in common?</h3>
+                    <span class="fragment">Lists</span>
+                    <span class="fragment">, Maybes</span>
+                    <span class="fragment">, Tasks</span>
+                    <span class="fragment"></span>
+                    <span class="fragment">Lists</span>
+                </section>
 				<section>
 					<h1>Reveal.js</h1>
 					<h3>The HTML Presentation Framework</h3>
