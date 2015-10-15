@@ -72,7 +72,7 @@ class Monad m where
                 </section>
                 <section>
                     <section>
-                        <h3>First some Haskell</h3>
+                        <h2>First some Haskell</h2>
                         Functions
                         <pre><code class="haskell" data-trim contenteditable>
 next :: Int -> Int
@@ -147,14 +147,187 @@ instance Interface Class where
                             Exercise: Add parameter to the get method
                         </aside>
                     </section>
+                    <section>
+                        <h3>Simulating extension functions</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+static class InterfaceExtensions
+{
+    static int GetPlusSomething(this Interface i, int something)
+    {
+        return i.Get() + something;
+    }
+}
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+getPlusSomething :: Interface c => c -> Int -> Int
+getPlusSomething c something = (get c) + something
+                        </code></pre>
+                    </section>
                 </section>
                 <section>
-                    <h3>What do these have in common?</h3>
-                    <span class="fragment">Lists</span>
-                    <span class="fragment">, Maybes</span>
-                    <span class="fragment">, Tasks</span>
-                    <span class="fragment"></span>
-                    <span class="fragment">Lists</span>
+                    <h2>Functors</h2>
+                </section>
+                <section>
+                    <h2>What do these have in common?</h2>
+                    <ul>
+                        <li>Lists</li>
+                        <li>Maybes</li>
+                        <li>Tasks</li>
+                        <li>Dictionaries</li>
+                        <li>Functions</li>
+                        <li>Trees</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Lists</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+List&lt;int&gt; list = new List&lt;int&gt; { 1, 2, 3 };
+List&lt;string&gt; transformed = list.Select(p => p.ToString()).ToList();
+                    </code></pre>
+                </section><section>
+                    <h2>Maybes</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+class Maybe&lt;T&gt;
+{
+    public bool HasValue;
+    public T Value;
+    public Maybe() { HasValue = false; }
+    public Maybe(T value) { HasValue = true; Value = value; }
+    public Maybe&lt;TResult&gt; Transform(Func&lt;T, TResult&gt; function)
+    {
+        return HasValue ? 
+            new Maybe&lt;TResult&gt;(function(Value)) : 
+            new Maybe&lt;TResult&gt;()
+    }
+}
+
+Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;();
+Maybe&lt;string&gt; transformed = maybe.Transform(p => p.ToString());
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Tasks</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; someTask = Task.Run(() =&gt; 1);
+Task&lt;string&gt; transformed = 
+    someTask.ContinueWith(tsk =&gt; tsk.Result.ToString());
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Dictionaries</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Dictionary&lt;string, int&gt; dictionary = 
+    new Dictionray&lt;string, int&gt;() { {&quot;a&quot;, 1} };
+Dictionary&lt;string, string&gt; transformed = 
+    dictionary.ToDictionary(kv =&gt; kv.Key, kv =&gt; kv.Value.ToString());
+                    </code></pre>
+                </section>
+                
+                <section>
+                    <h2>Functions</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Func&lt;object, int&gt; function = p =&gt; 1;
+Func&lt;object, string&gt; transformed = p =&gt; function(p).ToString();
+                    </code></pre>
+                    <p class="fragment" data-fragment-index="1">but also</p>
+                    <pre class="fragment" data-fragment-index="1"><code class="cs" data-trim contenteditable>
+Func&lt;int, object&gt; function = p =&gt; 1;
+Func<string, object> transformed = p => function(p.ToString());
+                    </code></pre>
+                </section>
+                <section>
+                    The common interface
+                    <pre><code class="cs" data-trim contenteditable>
+interface IFunctor&lt;T&gt;
+{
+    IFunctor&lt;TResult&gt; Select(Func&lt;T, TResult&gt; function);
+}
+                    </code></pre>
+                    <p class="fragment" data-fragment-index="2">or better</p>
+                    <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim contenteditable>
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>What is it good for?</h2>
+                </section>
+                <section>
+                    <h3>Functions common for all functors</h3>
+                    <pre><code class="haskell" data-trim contenteditable>
+replaceWithConstant :: Functor f => a -> f b -> f a
+replaceWithConstant constant x = fmap (\x -> constant) x
+
+void :: Functor f => f a -> f ()
+void x = replaceWithConstant () x
+
+deeperFmap :: Functor f => Functor g => (a -> b) -> f (g a) -> f (g b)
+deeperFmap func x = fmap (fmap func) x
+                    </code></pre>
+                </section>
+                <section>
+                    <h3>Avoid reinventing the wheel</h3>
+                    <p class="fragment">Functors are everywhere</p>
+                    <p class="fragment">Recognizing a functor can make it easier to work with</p>
+                    <p class="fragment">Possibility to build upon existing knowledge</p>
+                </section>
+                <section>
+                    <h2>Back to the topic</h2>
+                </section>
+                <section>
+                    <h2>There are other things these have in common</h2>
+                    <ul>
+                        <li>Lists</li>
+                        <li>Maybes</li>
+                        <li>Tasks</li>
+                        <li>Functions</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Lists</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+List<int> list = new List<int> { 1, 2, 3 };
+List<string> transformed = 
+    list.SelectMany(p => new List&lt;string&gt;(p.ToString()));
+                    </code></pre>
+                </section><section>
+                    <h2>Maybes</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+class Maybe&lt;T&gt;
+{
+    public bool HasValue;
+    public T Value;
+    public Maybe() { HasValue = false; }
+    public Maybe(T value) { HasValue = true; Value = value; }
+    public Maybe&lt;TResult&gt; TransformMany(Func&lt;T, Maybe&lt;TResult&gt;&gt; function)
+    {
+        return HasValue ? 
+            function(Value) : 
+            new Maybe&lt;TResult&gt;()
+    }
+}
+                    </code></pre>
+                    <pre><code class="cs" data-trim contenteditable>
+Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;(3);
+Maybe&lt;int&gt; transformed = 
+    maybe.TransformMany(p => new Maybe&lt;string&gt;(p.ToString()));
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Tasks</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; someTask = Task.Run(() =&gt; 1);
+Task&lt;string&gt; transformed = someTask
+        .ContinueWith(tsk =&gt; Task.FromResult(tsk.Result.ToString()))
+        .Unwrap();
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Functions</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Func&lt;int, object&gt; function = p =&gt; 1;
+Func<string, object> transformed = p => function(p.ToString());
+                    </code></pre>
                 </section>
 				<section>
 					<h1>Reveal.js</h1>
