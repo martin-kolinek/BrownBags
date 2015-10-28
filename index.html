@@ -595,8 +595,9 @@ doFKTimes state k = do
                     <p class="fragment">What different monads allow us to do is get different results from the same code</p>
                 </section>
                 <section>
-                    <h3>Let's try it out</h3>
-                    <pre><code class="cs" data-trim contenteditable>
+                    <section>
+                        <h3>Let's try it out</h3>
+                        <pre><code class="cs" data-trim contenteditable>
 int result = 0;
 while(calculateMore(result))
 {
@@ -607,8 +608,38 @@ if(result < 0)
     return -result;
 }
 return result;
-                    </code></pre>
-                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+                        </code></pre>
+                        <pre class="fragment"><code class="cs" data-trim contenteditable>
+int GetResult() { return GetResultInner(0); }
+int GetResultInner(int previousStep)
+{
+    bool doMore = calculateMore(previousStep);
+    if(doMore)
+    {
+        int newStep = doCalculation(previousStep);
+        return GetResultInner(newStep);
+    }
+    if(previousStep < 0) { return -previousStep; }
+    return previousStep;
+}
+                        </code></pre>
+                    </section>
+                    <section>
+                        <pre><code class="cs" data-trim contenteditable>
+int GetResult() { return GetResultInner(0); }
+int GetResultInner(int previousStep)
+{
+    bool doMore = calculateMore(previousStep);
+    if(doMore)
+    {
+        int newStep = doCalculation(previousStep);
+        return GetResultInner(newStep);
+    }
+    if(previousStep < 0) { return -previousStep; }
+    return previousStep;
+}
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
 do
     let loop state = do
         doMore <- calculateMore state
@@ -617,7 +648,8 @@ do
             loop newState
         else if result < 0 then return (-result) else return result
     loop 0
-                    </code></pre>
+                        </code></pre>
+                    </section>
                 </section>
                 <section>
                     <h3>Maybe</h3>
@@ -690,15 +722,96 @@ do
         doMore <- calculateMore state
         if doMore do
             newState <- doCalculation state
-            loop newState
+            returnValue <- loop newState
+            return returnValue
         else if result < 0 then return (-result) else return result
     loop 0
                         </code></pre>
                         <pre class="fragment"><code class="cs" data-trim contenteditable>
-int result = 0;
-while(await calculateMore(result))
+Task&lt;int&gt; GetResult() { return GetResultInner(0); }
+Task&lt;int&gt; GetResultInner(int previousStep)
 {
-    result = await doCalculation(result);
+    bool doMore = await calculateMore(previousStep);
+    if(doMore)
+    {
+        int newStep = await doCalculation(previousStep);
+        return await GetResultInner(newStep);
+    }
+    if(previousStep &lt; 0) { return -previousStep; } return previousStep;
+}
+                        </code></pre>
+                    </section>
+                    <section>
+                        <img src="/msdn.jpeg" />
+                    </section>
+                    <section>
+                        <pre><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; AccessTheWebAsync()
+{
+    HttpClient client = new HttpClien();
+    Task&lt;string&gt; getStringTask = 
+        client.GetStringAsync(&quot;http://msdn.microsoft.com&quot;);
+    
+    DoIndependentWork();
+    
+    return getStringTask.ContinueWith(task =&gt;
+    {
+        string urlContents = task.Result;
+        
+        return urlContents.Length;
+    }, TaskScheduler.FromCurrentSyncrhonizationContext());
+}
+                        </code></pre>
+                        <p class="fragment" data-fragment-index="1">
+                            Have a look at <a href="http://docs.scala-lang.org/overviews/core/futures.html">Scala documentation</a>
+                        </p>
+                        <p class="fragment" data-fragment-index="1">
+                            Task = Future, TaskCompletionSource = Promise, <br />do blocks = for comprehensions
+                        </p>
+                    </section>
+                </section>
+                <section>
+                    <section>
+                        <h3>State monad</h3><h5>The reason monads are so important for functional programming</h5>
+                        <pre><code class="haskell" data-trim contenteditable>
+type State state a = state -> (state, a)
+instance Monad State state where
+    return x = \s -> (s, x)
+    bind :: (a -> State state b)       -> a -> State state b 
+    --      (a -> state -> (state, b)) -> a -> (state -> (state, b))
+    bind f x = let nextStep :: state -> (state, a)
+                   nextStep oldState = f x oldState
+               in  nextStep
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+writeValue :: state -> State state ()
+writeValue st = \_ -> (st, ())
+
+readValue :: State state state
+readValue = \st -> (st, st)
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h3>And back to our example</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+do
+    writeValue 0
+    let condition = do
+        val <- readValue
+        doMore <- calculateMore val
+        return doMore
+    while condition do
+        val <- readValue
+        newVal <- doCalculation val
+        writeValue val
+    res <- readValue
+    if res < 0 then return -res else return res
+                        </code></pre>
+                        <pre><code class="cs" data-trim contenteditable>
+int result = 0;
+while(calculateMore(result))
+{
+    result = doCalculation(result);
 }
 if(result < 0)
 {
@@ -707,6 +820,25 @@ if(result < 0)
 return result;
                         </code></pre>
                     </section>
+                </section>
+                <section>
+                    <h3>Avoiding reinventing the wheel</h3>
+                    <pre><code class="haskell" data-trim contenteditable>
+type Name = [String]
+type NamedDataCollection a = Map Name a
+
+type DataExtractor a b = a -> NamedDataCollection a
+                    </code></pre>
+                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+instance Monad NamedDataCollection where
+    return a = singleton [] a
+    bind f x = let extractPairs :: (Name, a) -> [(Name, a)]
+                   extractPairs (name, a) = 
+                        toList (mapKeys (\k -> name ++ k) (f a))
+               in fromList (bind extractPairs (toList x))
+                    </code></pre>
+                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+                    </code></pre>
                 </section>
 				<section>
 					<h1>Reveal.js</h1>
