@@ -209,14 +209,14 @@ class Maybe&lt;T&gt;
 }
 
 Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;();
-Maybe&lt;string&gt; transformed = maybe.Transform(p => p.ToString());
+Maybe&lt;string&gt; transformed = maybe.Select(p => p.ToString());
                     </code></pre>
                     <pre class="fragment"><code class="cs" data-trim contenteditable>
 Maybe&lt;TResult&gt; Select&lt;TResult, TInput&gt;(
     Maybe&lt;TInput&gt; input, 
     Func&lt;TInput, TResult&gt; function)
 {
-    return input.Transform(function);
+    return input.Select(function);
 }
                     </code></pre>
                 </section>
@@ -285,6 +285,14 @@ interface IFunctor&lt;T&gt;
 class Functor f where
     fmap :: (a -> b) -> f a -> f b
                     </code></pre>
+                    <p class="fragment" data-fragment-index="3">There are also laws</p>
+                    <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim contenteditable>
+fmap id = id
+fmap (f . g) = fmap f . fmap g
+                    </code></pre>
+                    <aside class="notes">
+                        Can you think of something that breaks these laws and implements the functor interface?
+                    </aside>
                 </section>
                 <section>
                     <h2>What is it good for?</h2>
@@ -349,7 +357,7 @@ class Maybe&lt;T&gt;
     public T Value;
     public Maybe() { HasValue = false; }
     public Maybe(T value) { HasValue = true; Value = value; }
-    public Maybe&lt;TResult&gt; TransformMany(Func&lt;T, Maybe&lt;TResult&gt;&gt; function)
+    public Maybe&lt;TResult&gt; SelectMany(Func&lt;T, Maybe&lt;TResult&gt;&gt; function)
     {
         return HasValue ? 
             function(Value) : 
@@ -360,7 +368,7 @@ class Maybe&lt;T&gt;
                     <pre><code class="cs" data-trim contenteditable>
 Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;(3);
 Maybe&lt;int&gt; transformed = 
-    maybe.TransformMany(p => new Maybe&lt;string&gt;(p.ToString()));
+    maybe.SelectMany(p => new Maybe&lt;string&gt;(p.ToString()));
                     </code></pre>
                 </section>
                 <section>
@@ -437,6 +445,14 @@ Dictionary&lt;TKey, TResult&gt; SelectMany&lt;TKey, TResult, TInput&gt;(
 class Monad m where
     return :: a -> m a
     bind :: (a -> m b) -> m a -> m b
+                    </code></pre>
+                    <p class="fragment" data-fragment-index="2">
+                        There are also laws
+                    </p>
+                    <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim>
+bind f (return x) = f x
+bind return m = m
+bind g (bind f m) = bind (\x -> bind g (f x)) m
                     </code></pre>
                 </section>
                 <section>
@@ -819,6 +835,53 @@ if(result < 0)
 }
 return result;
                         </code></pre>
+                        <aside class="notes">
+                            How is while defined?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <section>
+                        <h3>IO monad</h3><h5>How we do side effects in haskell</h5>
+                        <pre><code class="haskell" data-trim contenteditable>
+main = IO ()
+
+instance Monad IO
+
+writeToFile :: String -> String -> IO ()
+readFromFile :: String -> IO String
+
+foreign import ccall "set_icanon" set_icanon :: CInt -> IO ()
+foreign import ccall "unset_icanon" unset_icanon :: CInt -> IO ()
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h3>Limiting what can be done</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+data FileReadIO a = FileReadIO (IO a)
+
+instance monad FileReadIO where
+    return a = FileReadIO (return a)
+    bind f (FileReadIO io) = FileReadIO (do
+        a <- io
+        let FileReadIO inner = f a
+        inner
+        )
+
+readFromFile2 :: String -> FileReadIO String
+readFromFile2 x = FileReadIO (readFromFile x)
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+createReport :: FileReadIO String -> IO ()
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+createReport (do
+    data <- readFromFile2 "file"
+    if null data then do
+        readFromFile2 "backupfile"
+    else return data
+    )
+                        </code></pre>
                     </section>
                 </section>
                 <section>
@@ -852,16 +915,6 @@ customerReportExtractor =
     (customerOrderExtractor >>> orderReportExtractor) 
         <+> simpleCustomerReportExtractor
                     </code></pre>
-                </section>
-                <section>
-                    <h2>
-                        There are other uses and other abstractions
-                    </h2>
-                    <ul>
-                        <li>Monads to limit what can be done</li>
-                        <li>Applicative functors</li>
-                        <li>...</li>
-                    </ul>
                 </section>
                 <section>
                     <blockquote>
