@@ -55,6 +55,9 @@
                         All told, a monad in X is just a monoid in the category of endofunctors of X, with product × replaced by composition of endofunctors and unit set by the identity endofunctor.
                     </blockquote>
                     <a class="fragment" href="http://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">Category theory for programmers</a>
+                    <aside class="notes">
+                        Who has seen this?
+                    </aside>
                 </section>
                 <section>
                     <h2>Common definition</h2>
@@ -69,6 +72,10 @@ class Monad m where
 (m >>= return) = m
 ((m >>= f) >>= g) = (m >>= (\x -> f x >>= g))
                     </code></pre>
+                    <aside class="notes">
+                        Who has seen this?
+                        Who understands what it means?
+                    </aside>
                 </section>
                 <section>
                     <section>
@@ -94,7 +101,8 @@ sound Dog = "Bark"
 sound (Dragon heads) = intercalate " " (replicate heads "Roar")
                         </pre></code>
                         <aside class="notes">
-                            Question: Why does Int -> Int -> Int make sense?
+                            Who has experience with Haskell, Scala, F#? <br/>
+                            Question: Why does Int -> Int -> Int make sense?<br/>
                             Exercise: Add pokemon (they say their name)
                         </aside>
                     </section>
@@ -176,6 +184,9 @@ getPlusSomething c something = (get c) + something
                         <li>Dictionaries</li>
                         <li>Functions</li>
                     </ul>
+                    <aside class="notes">
+                        Why do we care?
+                    </aside>
                 </section>
                 <section>
                     <h2>Lists</h2>
@@ -327,6 +338,9 @@ deeperFmap func x = fmap (fmap func) x
                         <li>Tasks</li>
                         <li>Functions</li>
                     </ul>
+                    <aside class="notes">
+                        Why do we care?
+                    </aside>
                 </section>
                 <section>
                     <h2>Lists</h2>
