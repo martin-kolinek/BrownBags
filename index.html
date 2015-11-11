@@ -56,7 +56,9 @@
                     </blockquote>
                     <a class="fragment" href="http://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">Category theory for programmers</a>
                     <aside class="notes">
-                        Who has seen this?
+                        Who has seen this? <br />
+                        Who understands it? <br />
+                        I won't help you with understanding this
                     </aside>
                 </section>
                 <section>
@@ -73,7 +75,7 @@ class Monad m where
 ((m >>= f) >>= g) = (m >>= (\x -> f x >>= g))
                     </code></pre>
                     <aside class="notes">
-                        Who has seen this?
+                        Who has seen this? <br />
                         Who understands what it means?
                     </aside>
                 </section>
@@ -125,7 +127,7 @@ get Thing = 1
                         </code></pre>
                         <aside class="notes">
                             Question: Why is there data Thing = Thing? <br/>
-                            Exercise: Add parameter to the get method
+                            Exercise: Add parameter to the get method <br />
                             Exercise: Put the returned value into constructor
                         </aside>
                     </section>
@@ -152,6 +154,7 @@ instance Interface Class where
     get Class = 1
                         </code></pre>
                         <aside class="notes">
+                            There are other ways to simulate this <br />
                             Exercise: Add parameter to the get method
                         </aside>
                     </section>
@@ -170,10 +173,18 @@ static class InterfaceExtensions
 getPlusSomething :: Interface c => c -> Int -> Int
 getPlusSomething c something = (get c) + something
                         </code></pre>
+                        <aside class="notes">
+                            Do you understand everything so far?
+                        </aside>
                     </section>
                 </section>
                 <section>
                     <h2>Functors</h2>
+                    <aside class="notes">
+                        Who has heard of these? <br />
+                        Who knows what these are? <br />
+                        Why I am talking about functors when I'm supposed to talk about monads
+                    </aside>
                 </section>
                 <section>
                     <h2>What do these have in common?</h2>
@@ -185,7 +196,7 @@ getPlusSomething c something = (get c) + something
                         <li>Functions</li>
                     </ul>
                     <aside class="notes">
-                        Why do we care?
+                        Do you know what all of them are?
                     </aside>
                 </section>
                 <section>
@@ -297,11 +308,12 @@ class Functor f where
     fmap :: (a -> b) -> f a -> f b
                     </code></pre>
                     <p class="fragment" data-fragment-index="3">There are also laws</p>
-                    <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim contenteditable>
+                    <pre class="fragment" data-fragment-index="3"><code class="haskell" data-trim contenteditable>
 fmap id = id
 fmap (f . g) = fmap f . fmap g
                     </code></pre>
                     <aside class="notes">
+                        The IFunctor&lt;TResult&gt; return value is not good <br />
                         Can you think of something that breaks these laws and implements the functor interface?
                     </aside>
                 </section>
@@ -320,15 +332,26 @@ void x = replaceWithConstant () x
 deeperFmap :: Functor f => Functor g => (a -> b) -> f (g a) -> f (g b)
 deeperFmap func x = fmap (fmap func) x
                     </code></pre>
+                    <aside class="notes">
+                        There is lambda syntax <br />
+                        Definitely not idiomatic haskell <br />
+                        Empty parentheses is the unit type <br />
+                    </aside>
                 </section>
                 <section>
                     <h3>Avoid reinventing the wheel</h3>
                     <p class="fragment">Functors are everywhere</p>
                     <p class="fragment">Recognizing a functor can make it easier to work with</p>
                     <p class="fragment">Possibility to build upon existing knowledge</p>
+                    <aside class="notes">
+                        Is everything clear?
+                    </aside>
                 </section>
                 <section>
                     <h2>Back to the topic</h2>
+                    <aside class="notes">
+                        Break? Stop?
+                    </aside>
                 </section>
                 <section>
                     <h2>There are other things these have in common?</h2>
@@ -339,7 +362,6 @@ deeperFmap func x = fmap (fmap func) x
                         <li>Functions</li>
                     </ul>
                     <aside class="notes">
-                        Why do we care?
                     </aside>
                 </section>
                 <section>
@@ -362,7 +384,11 @@ List&lt;TResult&gt; SelectMany&lt;TResult, TInput&gt;(
     return input.SelectMany(function)
 }
                     </code></pre>
-                </section><section>
+                    <aside class="notes">
+                        Note how we created a new list inside the function
+                    </aside>
+                </section>
+                <section>
                     <h2>Maybes</h2>
                     <pre><code class="cs" data-trim contenteditable>
 class Maybe&lt;T&gt;
@@ -384,6 +410,9 @@ Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;(3);
 Maybe&lt;int&gt; transformed = 
     maybe.SelectMany(p => new Maybe&lt;string&gt;(p.ToString()));
                     </code></pre>
+                    <aside class="notes">
+                        We build on the previous maybe
+                    </aside>
                 </section>
                 <section>
                     <h2>Tasks</h2>
@@ -427,6 +456,9 @@ Func&lt;TParameter, TResult&gt; SelectMany&lt;TParameter, TResult, TInput&gt;(
     return p =&gt; function(input(p))(p);
 }
                     </code></pre>
+                    <aside class="notes">
+                        This one's hairy, you don't really need to understand it
+                    </aside>
                 </section>
                 <section>
                     <h2>What happened to dictionaries?</h2>
@@ -452,6 +484,9 @@ Dictionary&lt;TKey, TResult&gt; SelectMany&lt;TKey, TResult, TInput&gt;(
     return ???;
 }
                     </code></pre>
+                    <aside class="notes">
+                        Any idea on how to fix it?
+                    </aside>
                 </section>
                 <section>
                     <h2>The common interface</h2>
@@ -468,6 +503,9 @@ bind f (return x) = f x
 bind return m = m
 bind g (bind f m) = bind (\x -> bind g (f x)) m
                     </code></pre>
+                    <aside class="notes">
+                        Why didn't I show a C# version?
+                    </aside>
                 </section>
                 <section>
                     <h2>Relationship to functors</h2>
@@ -475,10 +513,17 @@ bind g (bind f m) = bind (\x -> bind g (f x)) m
                     <pre class="fragment"><code class="haskell" data-trim contenteditable>
 fmap func x = bind (\a -> return (func a)) x
                     </code></pre>
+                    <aside class="notes">
+                        Who knows? <br />
+                        Break? Stop?
+                    </aside>
                 </section>
                 <section>
                     <h2>What is it good for?</h2>
                     <p class="fragment">Same as with functors <span class="fragment">(but monads are more fun)</span></p>
+                    <aside class="notes">
+                        I will probably suck at explaining the next part
+                    </aside>
                 </section>
                 <section>
                     <h3>Common functions for all monads</h3>
@@ -503,6 +548,10 @@ mapM f x:rest =
         addMx bs = bind (\b -> return (b:bs)) mx
     in bind addB mrest
                     </code></pre>
+                    <aside class="notes">
+                        Explain let <br />
+                        Make sure everyone understands mapM
+                    </aside>
                 </section>
                 <section>
                     <section>
@@ -525,6 +574,11 @@ addOneToF = do
 justF = do
     f
                         </code></pre>
+                        <aside class="notes">
+                            Do notation is very important in haskell as it allows more readable representation of sequential code <br />
+                            Can you rewrite the fmap using bind? <br />
+                            Do you understand?
+                        </aside>
                     </section>
                     <section>
                         <h3>Combining values</h3>
@@ -548,6 +602,10 @@ mapM f x:rest = do
     fx <- f x
     return (fx : frest)
                         </code></pre>
+                        <aside class="notes">
+                            These are also quite hairy, but go over it piece by piece <br />
+                            Now we can write mapM more easily
+                        </aside>
                     </section>
                     <section>
                         <h3>Depending on previous values</h3>
@@ -564,6 +622,10 @@ sumFAndG = do
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
 sumFAndG = bind (\fVal -> bind (\gVal -> return (fVal + gVal)) g fVal) f
                         </code></pre>
+                        <aside class="notes">
+                            Do you see how crucial this is? <br />
+                            It allows us to treat values wrapped in a monad as if they weren't
+                        </aside>
                     </section>
                     <section>
                         <h3>Ignoring previous values</h3>
@@ -580,6 +642,10 @@ executeFAndReturnGPlus3 = do
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
 executeFAndReturnGPlus3 = forget f (bind (\gVal -> return (gVal + 3)) g)
                         </code></pre>
+                        <aside class="notes">
+                            This one's quite boring, but still interesting <br />
+                            What is it good for?
+                        </aside>
                     </section>
                     <section>
                         <h3>Conditions</h3>
@@ -653,6 +719,10 @@ int GetResultInner(int previousStep)
     return previousStep;
 }
                         </code></pre>
+                        <aside class="notes">
+                            Can you rewrite this to haskell? (Without state) <br />
+                            Anything can be rewritten into code without mutating variables
+                        </aside>
                     </section>
                     <section>
                         <pre><code class="cs" data-trim contenteditable>
@@ -700,6 +770,9 @@ do
         else if result < 0 then return (-result) else return result
     loop 0
                     </code></pre>
+                    <aside class="notes">
+                        Calculations can fail
+                    </aside>
                 </section>
                 <section>
                     <h3>List</h3>
@@ -720,6 +793,9 @@ do
         else if result < 0 then return (-result) else return result
     loop 0
                     </code></pre>
+                    <aside class="notes">
+                        Calculations can be non deterministic
+                    </aside>
                 </section>
                 <section>
                     <section>
@@ -740,6 +816,9 @@ do
         else if result < 0 then return (-result) else return result
     loop 0
                         </code></pre>
+                        <aside class="notes">
+                            This one doesn't make much sense in haskell, but let's say it does
+                        </aside>
                     </section>
                     <section>
                         Let's have a closer look
@@ -770,9 +849,17 @@ Task&lt;int&gt; GetResultInner(int previousStep)
     if(previousStep &lt; 0) { return -previousStep; } return previousStep;
 }
                         </code></pre>
+                        <aside class="notes">
+                            I changed the code slightly <br />
+                            Do you see the similarity?
+                        </aside>
                     </section>
                     <section>
                         <img src="/msdn.jpeg" />
+                        <aside class="notes">
+                            Who got scared by this?
+                            Who understands this?
+                        </aside>
                     </section>
                     <section>
                         <pre><code class="cs" data-trim contenteditable>
@@ -798,6 +885,10 @@ Task&lt;int&gt; AccessTheWebAsync()
                         <p class="fragment" data-fragment-index="1">
                             Task = Future, TaskCompletionSource = Promise, <br />do blocks = for comprehensions
                         </p>
+                        <aside class="notes">
+                            Now that we know it's the same as a do block with Task monad, we can rewrite it into this. <br />
+                            What about multiple awaits?
+                        </aside>
                     </section>
                 </section>
                 <section>
@@ -850,7 +941,8 @@ if(result < 0)
 return result;
                         </code></pre>
                         <aside class="notes">
-                            How is while defined?
+                            How is while defined? <br />
+                            Can you imagine having more than one piece of state?
                         </aside>
                     </section>
                 </section>
@@ -868,6 +960,10 @@ readFromFile :: String -> IO String
 foreign import ccall "set_icanon" set_icanon :: CInt -> IO ()
 foreign import ccall "unset_icanon" unset_icanon :: CInt -> IO ()
                         </code></pre>
+                        <aside class="notes">
+                            writeToFile/readFromFile are functions implemented by runtime <br />
+                            this is not actual implementation
+                        </aside>
                     </section>
                     <section>
                         <h3>Limiting what can be done</h3>
@@ -896,6 +992,9 @@ createReport (do
     else return data
     )
                         </code></pre>
+                        <aside class="notes">
+                            The last one is how we call the createReport function
+                        </aside>
                     </section>
                 </section>
                 <section>
