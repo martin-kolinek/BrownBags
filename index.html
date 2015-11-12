@@ -104,6 +104,8 @@ sound (Dragon heads) = intercalate " " (replicate heads "Roar")
                         </pre></code>
                         <aside class="notes">
                             Who has experience with Haskell, Scala, F#? <br/>
+                            Type inference <br />
+                            In the beginning C# oriented, then it becomes difficult <br />
                             Question: Why does Int -> Int -> Int make sense?<br/>
                             Exercise: Add pokemon (they say their name)
                         </aside>
@@ -911,6 +913,9 @@ writeValue st = \_ -> (st, ())
 readValue :: State state state
 readValue = \st -> (st, st)
                         </code></pre>
+                        <aside class="notes">
+                            Type introduced
+                        </aside>
                     </section>
                     <section>
                         <h3>And back to our example</h3>
@@ -966,7 +971,7 @@ foreign import ccall "unset_icanon" unset_icanon :: CInt -> IO ()
                         </aside>
                     </section>
                     <section>
-                        <h3>Limiting what can be done</h3>
+                        <h4>Limiting what can be done</h4>
                         <pre><code class="haskell" data-trim contenteditable>
 data FileReadIO a = FileReadIO (IO a)
 
@@ -1028,12 +1033,24 @@ customerReportExtractor =
     (customerOrderExtractor >>> orderReportExtractor) 
         <+> simpleCustomerReportExtractor
                     </code></pre>
+                    <aside class="notes">
+                        Operators are just functions
+                    </aside>
                 </section>
                 <section>
                     <blockquote>
                         No wait, monads are like space suits, and functions of type a -> M b are like space brothels where you take off your suit, get space herpes and then put your suit back on.
                     </blockquote>
                     <img src="tutorials.png" />
+                    <aside class="notes">
+                        Explaining monads is futile
+                    </aside>
+                </section>
+                <section>
+                    <h2>
+                        That's it
+                    </h2>
+                    Slides at <a href="https://github.com/martin-kolinek/BrownBags">https://github.com/martin-kolinek/BrownBags</a>, in <i>monads</i> branch.
                 </section>
 			</div>
 
