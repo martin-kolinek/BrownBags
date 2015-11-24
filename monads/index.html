@@ -175,6 +175,16 @@ static class InterfaceExtensions
 getPlusSomething :: Interface c => c -> Int -> Int
 getPlusSomething c something = (get c) + something
                         </code></pre>
+                    </section>
+                    <section>
+                        <h3>Let and where</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+something = 1 + (2/5 + 11)
+something = let inside = 2/5 + 11
+            in 1 + inside
+something = 1 + inside
+    where inside = 2/5 + 11
+                        </code></pre>
                         <aside class="notes">
                             Do you understand everything so far?
                         </aside>
@@ -311,8 +321,8 @@ class Functor f where
                     </code></pre>
                     <p class="fragment" data-fragment-index="3">There are also laws</p>
                     <pre class="fragment" data-fragment-index="3"><code class="haskell" data-trim contenteditable>
-fmap id = id
-fmap (f . g) = fmap f . fmap g
+fmap id something = something
+fmap (\x -> f (g x)) something = fmap f (fmap g something)
                     </code></pre>
                     <aside class="notes">
                         The IFunctor&lt;TResult&gt; return value is not good <br />
@@ -559,22 +569,22 @@ mapM f x:rest =
                     <section>
                         <h3>Do notation</h3>
                         <pre><code class="haskell" data-trim contenteditable>
-f :: m Int
+firstNumber :: m Int
 
-addOneToF :: m Int
-addOneToF = fmap (\x -> x + 1) f
+oneBiggerThanFirstNumber :: m Int
+oneBiggerThanFirstNumber = fmap (\x -> x + 1) firstNumber
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-addOneToF = bind (\x -> return (x + 1)) f
+oneBiggerThanFirstNumber = bind (\x -> return (x + 1)) f
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-addOneToF = do
-    i <- f
+oneBiggerThanFirstNumber = do
+    i <- firstNumber
     return (i + 1)
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-justF = do
-    f
+justFirstNumber = do
+    firstNumber
                         </code></pre>
                         <aside class="notes">
                             Do notation is very important in haskell as it allows more readable representation of sequential code <br />
@@ -585,22 +595,26 @@ justF = do
                     <section>
                         <h3>Combining values</h3>
                         <pre><code class="haskell" data-trim contenteditable>
-f :: m Int
-g :: m Int
+firstNumber :: m Int
+secondNumber :: m Int
 
-sumFAndG :: m Int
-sumFAndG = do
-    fVal <- f
-    gVal <- g
-    return (fVal + gVal)
+sumOfFirstAndSecond :: m Int
+sumOfFirstAndSecond = do
+    firstVal <- firstNumber
+    secondVal <- secondNumber
+    return (firstVal + secondVal)
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-sumFAndG = bind (\fVal -> bind (\gVal -> return (fVal + gVal)) g) f
+sumOfFirstAndSecond = 
+    bind (\firstVal -> 
+        bind (\secondVal -> return (fVal + gVal)) 
+        secondNumber) 
+    firstNumber
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-mapM f [] = return []
-mapM f x:rest = do
-    frest <- f rest
+mapM function [] = return []
+mapM function x:rest = do
+    frest <- mapM function rest
     fx <- f x
     return (fx : frest)
                         </code></pre>
@@ -612,17 +626,22 @@ mapM f x:rest = do
                     <section>
                         <h3>Depending on previous values</h3>
                         <pre><code class="haskell" data-trim contenteditable>
-f :: m Int
-g :: Int -> m Int
+firstNumber :: m Int
+getSecondNumber :: Int -> m Int
 
-sumFAndG :: m Int
-sumFAndG = do
-    fVal <- f
-    gVal <- g fVal
-    return (fVal + gVal)
+sumOfFirstAndSecond :: m Int
+sumOfFirstAndSecond = do
+    firstVal <- firstNumber
+    secondVal <- getSecondNumber firstVal
+    return (firstVal + secondVal)
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-sumFAndG = bind (\fVal -> bind (\gVal -> return (fVal + gVal)) g fVal) f
+sumOfFirstAndSecond = 
+    bind (\firstVal -> 
+        bind (\secondVal -> 
+            return (fVal + gVal)) 
+        getSecondNumber firstVal)
+    firstNumber
                         </code></pre>
                         <aside class="notes">
                             Do you see how crucial this is? <br />
@@ -632,17 +651,19 @@ sumFAndG = bind (\fVal -> bind (\gVal -> return (fVal + gVal)) g fVal) f
                     <section>
                         <h3>Ignoring previous values</h3>
                         <pre><code class="haskell" data-trim contenteditable>
-f :: m Int
-g :: m Int
+firstNumber :: m Int
+secondNumber :: m Int
 
-executeFAndReturnGPlus3 :: m Int
-executeFAndReturnGPlus3 = do
-    f
-    gVal <- g fVal
-    return (gVal + 3)
+ignoreFirstAndReturnSecondPlus3 :: m Int
+ignoreFirstAndReturnSecondPlus3 = do
+    firstNumber
+    secondVal <- secondNumber
+    return (secondVal + 3)
                         </code></pre>
                         <pre class="fragment"><code class="haskell" data-trim contenteditable>
-executeFAndReturnGPlus3 = forget f (bind (\gVal -> return (gVal + 3)) g)
+ignoreFirstAndReturnSecondPlus3 = 
+    forget firstNumber 
+        (bind (\secondVal -> return (secondVal + 3)) secondNumber)
                         </code></pre>
                         <aside class="notes">
                             This one's quite boring, but still interesting <br />
@@ -652,36 +673,28 @@ executeFAndReturnGPlus3 = forget f (bind (\gVal -> return (gVal + 3)) g)
                     <section>
                         <h3>Conditions</h3>
                         <pre><code class="haskell" data-trim contenteditable>
-f :: m Int
-g :: Int -> m Int
+firstNumber :: m Int
+getSecondNumber :: Int -> m Int
 
-ifF3ThenF :: m Int
-ifF3ThenF = do
-    fVal <- f
-    if fVal = 3 
+ifFirstOddThenSumOfFirstAndSecond  :: m Int
+ifFirstOddThenSumOfFirstAndSecond = do
+    firstVal <- firstNumber
+    if firstVal `mod` 2 = 0
         then return fVal
         else do
-            gVal <- g fVal
-            return (fVal + gVal)
-                        </code></pre>
-                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
-ifFunc :: Int -> m Int
-ifFunc fVal = if fVal = 3 
-        then return fVal
-        else do
-            gVal <- g fVal
-            return (fVal + gVal)
+            secondVal <- getSecondNumber firstVal
+            return (firstVal + secondVal)
                         </code></pre>
                     </section>
                     <section>
                         <h3>Loops</h3>
                         <pre><code class="haskell" data-trim contenteditable>
-f :: m Int
+getNumber :: Int -> m Int
                         
-doFKTimes state k = do
-    fVal <- f
+getNumberKTimes state k = do
+    value <- getNumber state
     if k = 0 then return state
-             else doFKTimes (state + fVal) (k - 1)
+             else getNumberKTimes (state + value) (k - 1)
                         </code></pre>
                         <aside class="notes">
                             Can you imagine any piece of code rewritten into a do block?
@@ -774,29 +787,6 @@ do
                     </code></pre>
                     <aside class="notes">
                         Calculations can fail
-                    </aside>
-                </section>
-                <section>
-                    <h3>List</h3>
-                    <pre><code class="haskell" data-trim contenteditable>
-calculateMore :: Int -> List Bool
-doCalculation :: Int -> List Int
-
-bind :: (a -> List b) -> List a -> List b
-bind f [] = []
-bind f x:xs = (f x) ++ (bind f xs)
-
-do
-    let loop state = do
-        doMore <- calculateMore state
-        if doMore do
-            newState <- doCalculation state
-            loop newState
-        else if result < 0 then return (-result) else return result
-    loop 0
-                    </code></pre>
-                    <aside class="notes">
-                        Calculations can be non deterministic
                     </aside>
                 </section>
                 <section>
@@ -895,6 +885,65 @@ Task&lt;int&gt; AccessTheWebAsync()
                 </section>
                 <section>
                     <section>
+                        <h3>List</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+calculateMore :: Int -> List Bool
+doCalculation :: Int -> List Int
+
+bind :: (a -> List b) -> List a -> List b
+bind f [] = []
+bind f x:xs = (f x) ++ (bind f xs)
+
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            loop newState
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                        <aside class="notes">
+                            Calculations can be non deterministic
+                        </aside>
+                    </section>
+                    <section>
+                        Let's have a closer look
+                        <pre><code class="haskell" data-trim contenteditable>
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            returnValue <- loop newState
+            return returnValue
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                        <pre class="fragment"><code class="cs" data-trim contenteditable>
+IEnumerable&lt;int&gt; GetResult() { return GetResultInner(0); }
+IEnumerable&lt;int&gt; GetResultInner(int previousStep)
+{
+    foreach(bool doMore in calculateMore(previousStep)) {
+        if(doMore) {
+            foreach(int newStep in doCalculation(previousStep)) {
+                foreach(int returnValue in GetResultInner(newStep))
+                    yield return returnValue
+            }
+        }
+        if(previousStep &lt; 0) { yield return -previousStep; } 
+        else { yield return previousStep; }
+    }
+}
+                        </code></pre>
+                        <aside class="notes">
+                            I changed the code slightly <br />
+                            Do you see the similarity?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <section>
                         <h3>State monad</h3><h5>The reason monads are so important for functional programming</h5>
                         <pre><code class="haskell" data-trim contenteditable>
 type State state a = state -> (state, a)
@@ -918,7 +967,7 @@ readValue = \st -> (st, st)
                         </aside>
                     </section>
                     <section>
-                        <h3>And back to our example</h3>
+                        <h4>And back to our example</h4>
                         <pre><code class="haskell" data-trim contenteditable>
 do
     writeValue 0
@@ -1050,7 +1099,7 @@ customerReportExtractor =
                     <h2>
                         That's it
                     </h2>
-                    Slides at <a href="https://github.com/martin-kolinek/BrownBags">https://github.com/martin-kolinek/BrownBags</a>, in <i>monads</i> branch.
+                    Slides at <br/> <a href="http://martin-kolinek.github.io/BrownBags/monads/">http://martin-kolinek.github.io/BrownBags/monads/</a>
                 </section>
 			</div>
 
