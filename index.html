@@ -256,7 +256,7 @@ var newObservable = observable.OfType&lt;int&gt;();
 var newObservable = observable.GroupBy(p => p % 5);
                     </code></pre>
                     
-                    <a href="http://reactivex.io/documentation/operators.html#transforming">http://reactivex.io/documentation/operators.html#transforming</a>
+                    <a href="http://reactivex.io/documentation/operators.html#transforming">http://reactivex.io/documentation/operators.html#transforming</a> <br/>
                     <a href="http://reactivex.io/documentation/operators.html#transforming">http://reactivex.io/documentation/operators.html#filtering</a>
                 </section>
                 <section>
@@ -290,6 +290,30 @@ var observable = Observable.Create(
                     
                     <a href="http://reactivex.io/documentation/operators.html#creating">http://reactivex.io/documentation/operators.html#creating</a>
                 </section>
+				<section>
+                    <h3>Subjects</h3>
+                    <p>Both an IObservable and an IObserver</p>
+					<p>Publishes observed events to all subscribed observers</p>
+                    <p>A way to publish events manually using OnNext/OnCompleted/OnError</p>
+					<p>Avoid them (<a href="http://davesexton.com/blog/post/To-Use-Subject-Or-Not-To-Use-Subject.aspx">http://davesexton.com/blog/post/To-Use-Subject-Or-Not-To-Use-Subject.aspx</a>)
+					<p>Multiple types (ReplaySubject, BehaviorSubject)
+                </section>
+				<section>
+					<pre class=""><code class="cs" data-trim contenteditable>
+var range = Observable.Range(1, 10);
+range.Subscribe(p => Console.WriteLine(p));
+// let some time pass
+range.Subscribe(p => Console.WriteLine(p));
+                    </code></pre>
+					<pre class=""><code class="cs" data-trim contenteditable>
+mouseMovements.Subscribe(p => Console.WriteLine(p));
+// let some time pass
+mouseMovements.Subscribe(p => Console.WriteLine(p));
+                    </code></pre>
+					<p class="fragment" data-fragment-index="1">Cold observables do stuff when subscribed to</p>
+					<p class="fragment" data-fragment-index="1">Hot observables just push events to subscribers</p>
+					<a href="http://davesexton.com/blog/post/Hot-and-Cold-Observables.aspx" class="fragment" data-fragment-index="2 ">http://davesexton.com/blog/post/Hot-and-Cold-Observables.aspx</a>
+				</section>
 			</div>
 
 		</div>
