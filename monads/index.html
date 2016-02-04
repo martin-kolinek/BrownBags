@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Monads</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+                <section>
+                    <h1>Monads</h1>
+                </section>
+                <section>
+                    <h2>Category theory</h2>
+                    <blockquote>
+                        A monad is just a monoid in the category of endofunctors, what's the problem?
+                    </blockquote>
+                    <p class="fragment" data-fragment-index="1">
+                    Or more precisely
+                    </p>
+                    <blockquote class="fragment" data-fragment-index="1">
+                        All told, a monad in X is just a monoid in the category of endofunctors of X, with product × replaced by composition of endofunctors and unit set by the identity endofunctor.
+                    </blockquote>
+                    <a class="fragment" href="http://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">Category theory for programmers</a>
+                    <aside class="notes">
+                        Who has seen this? <br />
+                        Who understands it? <br />
+                        I won't help you with understanding this
+                    </aside>
+                </section>
+                <section>
+                    <h2>Common definition</h2>
+                    <pre><code class="haskell" data-trim>
+class Monad m where  
+    return :: a -> m a  
+    (>>=) :: m a -> (a -> m b) -> m b
+                    </code></pre>
+                    and laws
+                    <pre><code class="haskell" data-trim>
+(return x >>= f) = (f x)
+(m >>= return) = m
+((m >>= f) >>= g) = (m >>= (\x -> f x >>= g))
+                    </code></pre>
+                    <aside class="notes">
+                        Who has seen this? <br />
+                        Who understands what it means?
+                    </aside>
+                </section>
+                <section>
+                    <section>
+                        <h2>First some Haskell</h2>
+                        Functions
+                        <pre><code class="haskell" data-trim contenteditable>
+next :: Int -> Int
+next i = i + 1
+                        </code></pre>
+                        <pre class="fragment" data-fragment-index="1"><code class="haskell" data-trim contenteditable>
+ackermann :: Int -> Int -> Int
+ackermann 0 n = n + 1
+ackermann m 0 = ackermann (m - 1) 1
+ackermann m n = ackermann (m - 1) (ackermann m (n - 1))
+                        </pre></code>
+                        <p class="fragment" data-fragment-index="2">Data types</p>
+                        <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim contenteditable>
+data Animal = Cat | Dog | Dragon Int
+
+sound :: Animal -> String
+sound Cat = "Meow"
+sound Dog = "Bark"
+sound (Dragon heads) = intercalate " " (replicate heads "Roar")
+                        </pre></code>
+                        <aside class="notes">
+                            Who has experience with Haskell, Scala, F#? <br/>
+                            Type inference <br />
+                            In the beginning C# oriented, then it becomes difficult <br />
+                            Question: Why does Int -> Int -> Int make sense?<br/>
+                            Exercise: Add pokemon (they say their name)
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Simulating classes</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+class Thing
+{
+    public int Get()
+    {
+        return 1;
+    }
+}
+                        </code></pre>
+                        <pre class="fragment" data-fragment-index="1"><code class="haskell" data-trim contenteditable>
+data Thing = Thing
+
+get :: Thing -> Int
+get Thing = 1
+                        </code></pre>
+                        <aside class="notes">
+                            Question: Why is there data Thing = Thing? <br/>
+                            Exercise: Add parameter to the get method <br />
+                            Exercise: Put the returned value into constructor
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Simulating interfaces</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+interface Interface
+{
+    int Get();
+}
+
+class Class : Interface
+{
+    int Get() { return 1; }
+}
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+class Interface c where
+    get :: c -> Int
+    
+data Class = Class
+
+instance Interface Class where
+    get Class = 1
+                        </code></pre>
+                        <aside class="notes">
+                            There are other ways to simulate this <br />
+                            Exercise: Add parameter to the get method
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Simulating extension functions</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+static class InterfaceExtensions
+{
+    static int GetPlusSomething(this Interface i, int something)
+    {
+        return i.Get() + something;
+    }
+}
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+getPlusSomething :: Interface c => c -> Int -> Int
+getPlusSomething c something = (get c) + something
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h3>Let and where</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+something = 1 + (2/5 + 11)
+something = let inside = 2/5 + 11
+            in 1 + inside
+something = 1 + inside
+    where inside = 2/5 + 11
+                        </code></pre>
+                        <aside class="notes">
+                            Do you understand everything so far?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <h2>Functors</h2>
+                    <aside class="notes">
+                        Who has heard of these? <br />
+                        Who knows what these are? <br />
+                        Why I am talking about functors when I'm supposed to talk about monads
+                    </aside>
+                </section>
+                <section>
+                    <h2>What do these have in common?</h2>
+                    <ul>
+                        <li>Lists</li>
+                        <li>Maybes</li>
+                        <li>Tasks</li>
+                        <li>Dictionaries</li>
+                        <li>Functions</li>
+                    </ul>
+                    <aside class="notes">
+                        Do you know what all of them are?
+                    </aside>
+                </section>
+                <section>
+                    <h2>Lists</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+List&lt;int&gt; list = new List&lt;int&gt; { 1, 2, 3 };
+List&lt;string&gt; transformed = list.Select(p => p.ToString()).ToList();
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+List&lt;TResult&gt; Select&lt;TResult, TInput&gt;(
+    List&lt;TInput&gt; input, 
+    Func&lt;TInput, TResult&gt; function)
+{
+    return input.Select(function).ToList();
+}
+                    </code></pre>
+                </section><section>
+                    <h2>Maybes</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+class Maybe&lt;T&gt;
+{
+    public bool HasValue;
+    public T Value;
+    public Maybe() { HasValue = false; }
+    public Maybe(T value) { HasValue = true; Value = value; }
+    public Maybe&lt;TResult&gt; Select(Func&lt;T, TResult&gt; function)
+    {
+        return HasValue ? 
+            new Maybe&lt;TResult&gt;(function(Value)) : 
+            new Maybe&lt;TResult&gt;()
+    }
+}
+
+Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;();
+Maybe&lt;string&gt; transformed = maybe.Select(p => p.ToString());
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Maybe&lt;TResult&gt; Select&lt;TResult, TInput&gt;(
+    Maybe&lt;TInput&gt; input, 
+    Func&lt;TInput, TResult&gt; function)
+{
+    return input.Select(function);
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Tasks</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; someTask = Task.Run(() =&gt; 1);
+Task&lt;string&gt; transformed = 
+    someTask.ContinueWith(tsk =&gt; tsk.Result.ToString());
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Task&lt;TResult&gt; Select&lt;TResult, TInput&gt;(
+    Task&lt;TInput&gt; input, 
+    Func&lt;TInput, TResult&gt; function)
+{
+    return input.ContinueWith(t => function(t.Result));
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Dictionaries</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Dictionary&lt;object, int&gt; dictionary = 
+    new Dictionray&lt;object, int&gt;() { {new object(), 1} };
+Dictionary&lt;object, string&gt; transformed = 
+    dictionary.ToDictionary(kv =&gt; kv.Key, kv =&gt; kv.Value.ToString());
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Dictionary&lt;TKey, TResult&gt; Select&lt;TKey, TResult, TInput&gt;(
+    Dictionary&lt;TKey, TInput&gt; input, 
+    Func&lt;TInput, TResult&gt; function)
+{
+    return input.ToDictionary(p => p.Key, p => function(p));
+}
+                    </code></pre>
+                    <aside class="notes">
+                        Why does this not work with Key?
+                    </aside>
+                </section>
+                
+                <section>
+                    <h2>Functions</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Func&lt;object, int&gt; input = p =&gt; 1;
+Func&lt;object, string&gt; transformed = p =&gt; input(p).ToString();
+                    </code></pre>
+                    <pre class="fragment" data-fragment-index="1"><code class="cs" data-trim contenteditable>
+Func&lt;TParameter, TResult&gt; Select&lt;TParameter, TResult, TInput&gt;(
+    Func&lt;TParameter, TInput&gt; input, 
+    Func&lt;TInput, TResult&gt; function)
+{
+    return p =&gt; function(input(p));
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>The common interface</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+interface IFunctor&lt;T&gt;
+{
+    IFunctor&lt;TResult&gt; Transform(Func&lt;T, TResult&gt; function);
+}
+                    </code></pre>
+                    <p class="fragment" data-fragment-index="2">or better</p>
+                    <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim contenteditable>
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+                    </code></pre>
+                    <p class="fragment" data-fragment-index="3">There are also laws</p>
+                    <pre class="fragment" data-fragment-index="3"><code class="haskell" data-trim contenteditable>
+fmap id something = something
+fmap (\x -> f (g x)) something = fmap f (fmap g something)
+                    </code></pre>
+                    <aside class="notes">
+                        The IFunctor&lt;TResult&gt; return value is not good <br />
+                        Can you think of something that breaks these laws and implements the functor interface?
+                    </aside>
+                </section>
+                <section>
+                    <h2>What is it good for?</h2>
+                </section>
+                <section>
+                    <h3>Functions common for all functors</h3>
+                    <pre><code class="haskell" data-trim contenteditable>
+replaceWithConstant :: Functor f => a -> f b -> f a
+replaceWithConstant constant x = fmap (\x -> constant) x
+
+void :: Functor f => f a -> f ()
+void x = replaceWithConstant () x
+
+deeperFmap :: Functor f => Functor g => (a -> b) -> f (g a) -> f (g b)
+deeperFmap func x = fmap (fmap func) x
+                    </code></pre>
+                    <aside class="notes">
+                        There is lambda syntax <br />
+                        Definitely not idiomatic haskell <br />
+                        Empty parentheses is the unit type <br />
+                    </aside>
+                </section>
+                <section>
+                    <h3>Avoid reinventing the wheel</h3>
+                    <p class="fragment">Functors are everywhere</p>
+                    <p class="fragment">Recognizing a functor can make it easier to work with</p>
+                    <p class="fragment">Possibility to build upon existing knowledge</p>
+                    <aside class="notes">
+                        Is everything clear?
+                    </aside>
+                </section>
+                <section>
+                    <h2>Back to the topic</h2>
+                    <aside class="notes">
+                        Break? Stop?
+                    </aside>
+                </section>
+                <section>
+                    <h2>There are other things these have in common?</h2>
+                    <ul>
+                        <li>Lists</li>
+                        <li>Maybes</li>
+                        <li>Tasks</li>
+                        <li>Functions</li>
+                    </ul>
+                    <aside class="notes">
+                    </aside>
+                </section>
+                <section>
+                    <h2>Lists</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+List&lt;int&gt; list = new List&lt;int&gt; { 1, 2, 3 };
+List&lt;string&gt; transformed = 
+    list.SelectMany(p => new List&lt;string&gt;(p.ToString()));
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+List&lt;TResult&gt; Create&lt;TResult&gt;(TResult result)
+{
+    return new List&lt;TResult&gt;(){ result };
+}
+
+List&lt;TResult&gt; SelectMany&lt;TResult, TInput&gt;(
+    List&lt;TInput&gt; input, 
+    Func&lt;TInput, List&lt;TResult&gt;&gt; function)
+{
+    return input.SelectMany(function)
+}
+                    </code></pre>
+                    <aside class="notes">
+                        Note how we created a new list inside the function
+                    </aside>
+                </section>
+                <section>
+                    <h2>Maybes</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+class Maybe&lt;T&gt;
+{
+    public bool HasValue;
+    public T Value;
+    public Maybe() { HasValue = false; }
+    public Maybe(T value) { HasValue = true; Value = value; }
+    public Maybe&lt;TResult&gt; SelectMany(Func&lt;T, Maybe&lt;TResult&gt;&gt; function)
+    {
+        return HasValue ? 
+            function(Value) : 
+            new Maybe&lt;TResult&gt;()
+    }
+}
+                    </code></pre>
+                    <pre><code class="cs" data-trim contenteditable>
+Maybe&lt;int&gt; maybe = new Maybe&lt;int&gt;(3);
+Maybe&lt;int&gt; transformed = 
+    maybe.SelectMany(p => new Maybe&lt;string&gt;(p.ToString()));
+                    </code></pre>
+                    <aside class="notes">
+                        We build on the previous maybe
+                    </aside>
+                </section>
+                <section>
+                    <h2>Tasks</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; someTask = Task.Run(() =&gt; 1);
+Task&lt;string&gt; transformed = someTask
+        .ContinueWith(tsk =&gt; Task.FromResult(tsk.Result.ToString()))
+        .Unwrap();
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Task&lt;TResult&gt; Create&lt;TResult&gt;(TResult result)
+{
+    return Task.FromResult(result);
+}
+
+Task&lt;TResult&gt; SelectMany&lt;TResult, TInput&gt;(
+    Task&lt;TInput&gt; input, 
+    Func&lt;TInput, Task&lt;TResult&gt;&gt; function)
+{
+    return input.ContinueWith(t => function(t.Result)).Unwrap();
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Functions</h2>
+                    <pre><code class="cs" data-trim contenteditable>
+Func&lt;object, int&gt; input = p =&gt; 1;
+Func&lt;int, Func&lt;object, string&gt;&gt; function = i =&gt; (_ =&gt; i.ToString());
+Func&lt;object, string&gt; transformed = p =&gt; function(input(p))(p);
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Func&lt;TParameter, TResult&gt; Create&lt;TParameter, TResult&gt;(TResult result)
+{
+    return _ =&gt; result;
+}
+                    
+Func&lt;TParameter, TResult&gt; SelectMany&lt;TParameter, TResult, TInput&gt;(
+    Func&lt;TParameter, TInput&gt; input, 
+    Func&lt;TInput, Func&lt;TParameter, TResult&gt;&gt; function)
+{
+    return p =&gt; function(input(p))(p);
+}
+                    </code></pre>
+                    <aside class="notes">
+                        This one's hairy, you don't really need to understand it
+                    </aside>
+                </section>
+                <section>
+                    <h2>What happened to dictionaries?</h2>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Dictionary&lt;TKey, TResult&gt; Create&lt;TKey, TResult&gt;(TResult result)
+{
+    return ???;
+}
+                    </code></pre>
+                    <pre class="fragment"><code class="cs" data-trim contenteditable>
+Dictionary&lt;TKey, TResult&gt; SelectMany&lt;TKey, TResult, TInput&gt;(
+    Dictionary&lt;TKey, TInput&gt; input, 
+    Func&lt;TInput, Dictionary&lt;TKey, TResult&gt;&gt; function)
+{
+    Dictionary&lt;Tuple&lt;TKey, TKey&gt;, TResult&gt; result = 
+        input
+            .SelectMany(p =&gt; function(p.Value)
+                .Select(q =&gt; new { 
+                    Key = Tuple.Create(p.Key, q.Key), 
+                    Value = q.Value}))
+            .ToDictionary(p =&gt; p.Key, p =&gt; p.Value);
+
+    return ???;
+}
+                    </code></pre>
+                    <aside class="notes">
+                        Any idea on how to fix it?
+                    </aside>
+                </section>
+                <section>
+                    <h2>The common interface</h2>
+                    <pre><code class="haskell" data-trim contenteditable>
+class Monad m where
+    return :: a -> m a
+    bind :: (a -> m b) -> m a -> m b
+                    </code></pre>
+                    <p class="fragment" data-fragment-index="2">
+                        There are also laws
+                    </p>
+                    <pre class="fragment" data-fragment-index="2"><code class="haskell" data-trim>
+bind f (return x) = f x
+bind return m = m
+bind g (bind f m) = bind (\x -> bind g (f x)) m
+                    </code></pre>
+                    <aside class="notes">
+                        Why didn't I show a C# version?
+                    </aside>
+                </section>
+                <section>
+                    <h2>Relationship to functors</h2>
+                    <p class="fragment">Every monad is a functor</p>
+                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+fmap func x = bind (\a -> return (func a)) x
+                    </code></pre>
+                    <aside class="notes">
+                        Who knows? <br />
+                        Break? Stop?
+                    </aside>
+                </section>
+                <section>
+                    <h2>What is it good for?</h2>
+                    <p class="fragment">Same as with functors <span class="fragment">(but monads are more fun)</span></p>
+                    <aside class="notes">
+                        I will probably suck at explaining the next part
+                    </aside>
+                </section>
+                <section>
+                    <h3>Common functions for all monads</h3>
+                    <pre><code class="haskell" data-trim contenteditable>
+forget :: m a -> m b -> m b
+forget ma mb = bind (\_ -> mb) ma
+                    </code></pre>
+                    <pre><code class="haskell" data-trim contenteditable>
+when :: Bool -> m () -> m ()
+when True a = a
+when False _ = return ()
+                    </code></pre>
+                    <pre><code class="haskell" data-trim contenteditable>
+mapM :: (a -> m b) -> [a] -> m [b]
+mapM f [] = return []
+mapM f x:rest = 
+    let mrest :: m [b]
+        mrest = mapM f rest
+        mx :: m b
+        mx = f x
+        addMx :: [b] -> m [b]
+        addMx bs = bind (\b -> return (b:bs)) mx
+    in bind addB mrest
+                    </code></pre>
+                    <aside class="notes">
+                        Explain let <br />
+                        Make sure everyone understands mapM
+                    </aside>
+                </section>
+                <section>
+                    <section>
+                        <h3>Do notation</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+firstNumber :: m Int
+
+oneBiggerThanFirstNumber :: m Int
+oneBiggerThanFirstNumber = fmap (\x -> x + 1) firstNumber
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+oneBiggerThanFirstNumber = bind (\x -> return (x + 1)) f
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+oneBiggerThanFirstNumber = do
+    i <- firstNumber
+    return (i + 1)
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+justFirstNumber = do
+    firstNumber
+                        </code></pre>
+                        <aside class="notes">
+                            Do notation is very important in haskell as it allows more readable representation of sequential code <br />
+                            Can you rewrite the fmap using bind? <br />
+                            Do you understand?
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Combining values</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+firstNumber :: m Int
+secondNumber :: m Int
+
+sumOfFirstAndSecond :: m Int
+sumOfFirstAndSecond = do
+    firstVal <- firstNumber
+    secondVal <- secondNumber
+    return (firstVal + secondVal)
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+sumOfFirstAndSecond = 
+    bind (\firstVal -> 
+        bind (\secondVal -> return (fVal + gVal)) 
+        secondNumber) 
+    firstNumber
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+mapM function [] = return []
+mapM function x:rest = do
+    frest <- mapM function rest
+    fx <- f x
+    return (fx : frest)
+                        </code></pre>
+                        <aside class="notes">
+                            These are also quite hairy, but go over it piece by piece <br />
+                            Now we can write mapM more easily
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Depending on previous values</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+firstNumber :: m Int
+getSecondNumber :: Int -> m Int
+
+sumOfFirstAndSecond :: m Int
+sumOfFirstAndSecond = do
+    firstVal <- firstNumber
+    secondVal <- getSecondNumber firstVal
+    return (firstVal + secondVal)
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+sumOfFirstAndSecond = 
+    bind (\firstVal -> 
+        bind (\secondVal -> 
+            return (fVal + gVal)) 
+        getSecondNumber firstVal)
+    firstNumber
+                        </code></pre>
+                        <aside class="notes">
+                            Do you see how crucial this is? <br />
+                            It allows us to treat values wrapped in a monad as if they weren't
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Ignoring previous values</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+firstNumber :: m Int
+secondNumber :: m Int
+
+ignoreFirstAndReturnSecondPlus3 :: m Int
+ignoreFirstAndReturnSecondPlus3 = do
+    firstNumber
+    secondVal <- secondNumber
+    return (secondVal + 3)
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+ignoreFirstAndReturnSecondPlus3 = 
+    forget firstNumber 
+        (bind (\secondVal -> return (secondVal + 3)) secondNumber)
+                        </code></pre>
+                        <aside class="notes">
+                            This one's quite boring, but still interesting <br />
+                            What is it good for?
+                        </aside>
+                    </section>
+                    <section>
+                        <h3>Conditions</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+firstNumber :: m Int
+getSecondNumber :: Int -> m Int
+
+ifFirstOddThenSumOfFirstAndSecond  :: m Int
+ifFirstOddThenSumOfFirstAndSecond = do
+    firstVal <- firstNumber
+    if firstVal `mod` 2 = 0
+        then return fVal
+        else do
+            secondVal <- getSecondNumber firstVal
+            return (firstVal + secondVal)
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h3>Loops</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+getNumber :: Int -> m Int
+                        
+getNumberKTimes state k = do
+    value <- getNumber state
+    if k = 0 then return state
+             else getNumberKTimes (state + value) (k - 1)
+                        </code></pre>
+                        <aside class="notes">
+                            Can you imagine any piece of code rewritten into a do block?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <h2>Anything can be done inside a do block</h2>
+                    <p class="fragment">What different monads allow us to do is get different results from the same code</p>
+                </section>
+                <section>
+                    <section>
+                        <h3>Let's try it out</h3>
+                        <pre><code class="cs" data-trim contenteditable>
+int result = 0;
+while(calculateMore(result))
+{
+    result = doCalculation(result);
+}
+if(result < 0)
+{
+    return -result;
+}
+return result;
+                        </code></pre>
+                        <pre class="fragment"><code class="cs" data-trim contenteditable>
+int GetResult() { return GetResultInner(0); }
+int GetResultInner(int previousStep)
+{
+    bool doMore = calculateMore(previousStep);
+    if(doMore)
+    {
+        int newStep = doCalculation(previousStep);
+        return GetResultInner(newStep);
+    }
+    if(previousStep < 0) { return -previousStep; }
+    return previousStep;
+}
+                        </code></pre>
+                        <aside class="notes">
+                            Can you rewrite this to haskell? (Without state) <br />
+                            Anything can be rewritten into code without mutating variables
+                        </aside>
+                    </section>
+                    <section>
+                        <pre><code class="cs" data-trim contenteditable>
+int GetResult() { return GetResultInner(0); }
+int GetResultInner(int previousStep)
+{
+    bool doMore = calculateMore(previousStep);
+    if(doMore)
+    {
+        int newStep = doCalculation(previousStep);
+        return GetResultInner(newStep);
+    }
+    if(previousStep < 0) { return -previousStep; }
+    return previousStep;
+}
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            loop newState
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                    </section>
+                </section>
+                <section>
+                    <h3>Maybe</h3>
+                    <pre><code class="haskell" data-trim contenteditable>
+calculateMore :: Int -> Maybe Bool
+doCalculation :: Int -> Maybe Int
+
+bind :: (a -> Maybe b) -> Maybe a -> Maybe b
+bind f (Just a) = f a
+bind f Nothing = Nothing
+
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            loop newState
+        else if result < 0 then return (-result) else return result
+    loop 0
+                    </code></pre>
+                    <aside class="notes">
+                        Calculations can fail
+                    </aside>
+                </section>
+                <section>
+                    <section>
+                        <h3>Task</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+calculateMore :: Int -> Task Bool
+doCalculation :: Int -> Task Int
+
+bind :: (a -> Task b) -> Task a -> Task b
+bind f task = unwrap (continueWith f task)
+
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            loop newState
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                        <aside class="notes">
+                            This one doesn't make much sense in haskell, but let's say it does
+                        </aside>
+                    </section>
+                    <section>
+                        Let's have a closer look
+                        <pre><code class="haskell" data-trim contenteditable>
+bind :: (a -> Task b) -> Task a -> Task b
+bind f task = unwrap (continueWith f task)
+
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            returnValue <- loop newState
+            return returnValue
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                        <pre class="fragment"><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; GetResult() { return GetResultInner(0); }
+Task&lt;int&gt; GetResultInner(int previousStep)
+{
+    bool doMore = await calculateMore(previousStep);
+    if(doMore)
+    {
+        int newStep = await doCalculation(previousStep);
+        return await GetResultInner(newStep);
+    }
+    if(previousStep &lt; 0) { return -previousStep; } return previousStep;
+}
+                        </code></pre>
+                        <aside class="notes">
+                            I changed the code slightly <br />
+                            Do you see the similarity?
+                        </aside>
+                    </section>
+                    <section>
+                        <img src="msdn.jpeg" />
+                        <aside class="notes">
+                            Who got scared by this?
+                            Who understands this?
+                        </aside>
+                    </section>
+                    <section>
+                        <pre><code class="cs" data-trim contenteditable>
+Task&lt;int&gt; AccessTheWebAsync()
+{
+    HttpClient client = new HttpClien();
+    Task&lt;string&gt; getStringTask = 
+        client.GetStringAsync(&quot;http://msdn.microsoft.com&quot;);
+    
+    DoIndependentWork();
+    
+    return getStringTask.ContinueWith(task =&gt;
+    {
+        string urlContents = task.Result;
+        
+        return urlContents.Length;
+    }, TaskScheduler.FromCurrentSyncrhonizationContext());
+}
+                        </code></pre>
+                        <p class="fragment" data-fragment-index="1">
+                            Have a look at <a href="http://docs.scala-lang.org/overviews/core/futures.html">Scala documentation</a>
+                        </p>
+                        <p class="fragment" data-fragment-index="1">
+                            Task = Future, TaskCompletionSource = Promise, <br />do blocks = for comprehensions
+                        </p>
+                        <aside class="notes">
+                            Now that we know it's the same as a do block with Task monad, we can rewrite it into this. <br />
+                            What about multiple awaits?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <section>
+                        <h3>List</h3>
+                        <pre><code class="haskell" data-trim contenteditable>
+calculateMore :: Int -> List Bool
+doCalculation :: Int -> List Int
+
+bind :: (a -> List b) -> List a -> List b
+bind f [] = []
+bind f x:xs = (f x) ++ (bind f xs)
+
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            loop newState
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                        <aside class="notes">
+                            Calculations can be non deterministic
+                        </aside>
+                    </section>
+                    <section>
+                        Let's have a closer look
+                        <pre><code class="haskell" data-trim contenteditable>
+do
+    let loop state = do
+        doMore <- calculateMore state
+        if doMore do
+            newState <- doCalculation state
+            returnValue <- loop newState
+            return returnValue
+        else if result < 0 then return (-result) else return result
+    loop 0
+                        </code></pre>
+                        <pre class="fragment"><code class="cs" data-trim contenteditable>
+IEnumerable&lt;int&gt; GetResult() { return GetResultInner(0); }
+IEnumerable&lt;int&gt; GetResultInner(int previousStep)
+{
+    foreach(bool doMore in calculateMore(previousStep)) {
+        if(doMore) {
+            foreach(int newStep in doCalculation(previousStep)) {
+                foreach(int returnValue in GetResultInner(newStep))
+                    yield return returnValue
+            }
+        }
+        if(previousStep &lt; 0) { yield return -previousStep; } 
+        else { yield return previousStep; }
+    }
+}
+                        </code></pre>
+                        <aside class="notes">
+                            I changed the code slightly <br />
+                            Do you see the similarity?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <section>
+                        <h3>State monad</h3><h5>The reason monads are so important for functional programming</h5>
+                        <pre><code class="haskell" data-trim contenteditable>
+type State state a = state -> (state, a)
+instance Monad State state where
+    return x = \s -> (s, x)
+    bind :: (a -> State state b)       -> a -> State state b 
+    --      (a -> state -> (state, b)) -> a -> (state -> (state, b))
+    bind f x = let nextStep :: state -> (state, a)
+                   nextStep oldState = f x oldState
+               in  nextStep
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+writeValue :: state -> State state ()
+writeValue st = \_ -> (st, ())
+
+readValue :: State state state
+readValue = \st -> (st, st)
+                        </code></pre>
+                        <aside class="notes">
+                            Type introduced
+                        </aside>
+                    </section>
+                    <section>
+                        <h4>And back to our example</h4>
+                        <pre><code class="haskell" data-trim contenteditable>
+do
+    writeValue 0
+    let condition = do
+        val <- readValue
+        doMore <- calculateMore val
+        return doMore
+    while condition do
+        val <- readValue
+        newVal <- doCalculation val
+        writeValue val
+    res <- readValue
+    if res < 0 then return -res else return res
+                        </code></pre>
+                        <pre><code class="cs" data-trim contenteditable>
+int result = 0;
+while(calculateMore(result))
+{
+    result = doCalculation(result);
+}
+if(result < 0)
+{
+    return -result;
+}
+return result;
+                        </code></pre>
+                        <aside class="notes">
+                            How is while defined? <br />
+                            Can you imagine having more than one piece of state?
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <section>
+                        <h3>IO monad</h3><h5>How we do side effects in haskell</h5>
+                        <pre><code class="haskell" data-trim contenteditable>
+main = IO ()
+
+instance Monad IO
+
+writeToFile :: String -> String -> IO ()
+readFromFile :: String -> IO String
+
+foreign import ccall "set_icanon" set_icanon :: CInt -> IO ()
+foreign import ccall "unset_icanon" unset_icanon :: CInt -> IO ()
+                        </code></pre>
+                        <aside class="notes">
+                            writeToFile/readFromFile are functions implemented by runtime <br />
+                            this is not actual implementation
+                        </aside>
+                    </section>
+                    <section>
+                        <h4>Limiting what can be done</h4>
+                        <pre><code class="haskell" data-trim contenteditable>
+data FileReadIO a = FileReadIO (IO a)
+
+instance monad FileReadIO where
+    return a = FileReadIO (return a)
+    bind f (FileReadIO io) = FileReadIO (do
+        a <- io
+        let FileReadIO inner = f a
+        inner
+        )
+
+readFromFile2 :: String -> FileReadIO String
+readFromFile2 x = FileReadIO (readFromFile x)
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+createReport :: FileReadIO String -> IO ()
+                        </code></pre>
+                        <pre class="fragment"><code class="haskell" data-trim contenteditable>
+createReport (do
+    data <- readFromFile2 "file"
+    if null data then do
+        readFromFile2 "backupfile"
+    else return data
+    )
+                        </code></pre>
+                        <aside class="notes">
+                            The last one is how we call the createReport function
+                        </aside>
+                    </section>
+                </section>
+                <section>
+                    <h3>Avoiding reinventing the wheel</h3>
+                    <pre><code class="haskell" data-trim contenteditable>
+type Name = [String]
+type NamedDataCollection a = Map Name a
+
+type DataExtractor a b = a -> NamedDataCollection b
+                    </code></pre>
+                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+instance Monad NamedDataCollection where
+    return a = singleton [] a
+    bind f x = let extractPairs :: (Name, a) -> [(Name, a)]
+                   extractPairs (name, a) = 
+                        toList (mapKeys (\k -> name ++ k) (f a))
+               in fromList (bind extractPairs (toList x))
+                    </code></pre>
+                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+customerOrderExtractor :: DataExtractor Customer Order
+orderReportExtractor :: DataExtractor Order Report
+customerReportExtractor :: DataExtractor Customer Report
+customerReportExtractor = customerOrderExtractor >>> orderReportExtractor
+                    </code></pre>
+                    <pre class="fragment"><code class="haskell" data-trim contenteditable>
+instance MonadPlus NamedDataCollection a
+    mzero = empty
+    mplus = union
+simpleCustomerReportExtractor :: DataExtractor Customer Report
+customerReportExtractor = 
+    (customerOrderExtractor >>> orderReportExtractor) 
+        <+> simpleCustomerReportExtractor
+                    </code></pre>
+                    <aside class="notes">
+                        Operators are just functions
+                    </aside>
+                </section>
+                <section>
+                    <blockquote>
+                        No wait, monads are like space suits, and functions of type a -> M b are like space brothels where you take off your suit, get space herpes and then put your suit back on.
+                    </blockquote>
+                    <img src="tutorials.png" />
+                    <aside class="notes">
+                        Explaining monads is futile
+                    </aside>
+                </section>
+                <section>
+                    <h2>
+                        That's it
+                    </h2>
+                    Slides at <br/> <a href="http://martin-kolinek.github.io/BrownBags/monads/">http://martin-kolinek.github.io/BrownBags/monads/</a>
+                </section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
