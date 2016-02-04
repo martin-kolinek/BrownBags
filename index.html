@@ -299,7 +299,7 @@ var observable = Observable.Create(
 					<p>Multiple types (ReplaySubject, BehaviorSubject)
                 </section>
 				<section>
-					<pre class=""><code class="cs" data-trim contenteditable>
+ 					<pre class=""><code class="cs" data-trim contenteditable>
 var range = Observable.Range(1, 10);
 range.Subscribe(p => Console.WriteLine(p));
 // let some time pass
@@ -313,6 +313,23 @@ mouseMovements.Subscribe(p => Console.WriteLine(p));
 					<p class="fragment" data-fragment-index="1">Cold observables do stuff when subscribed to</p>
 					<p class="fragment" data-fragment-index="1">Hot observables just push events to subscribers</p>
 					<a href="http://davesexton.com/blog/post/Hot-and-Cold-Observables.aspx" class="fragment" data-fragment-index="2 ">http://davesexton.com/blog/post/Hot-and-Cold-Observables.aspx</a>
+				</section>
+				<section>
+					<h3>Schedulers</h3>
+					<p>Allow execution on different threads</p3>
+					<pre class="fragment"><code class="cs" data-trim contenteditable>
+Observable.Range(1, 10)
+	.SubscribeOn(scheduler)
+	.Subscribe(p => Console.WriteLine(p));
+                    </code></pre>
+					<pre class="fragment"><code class="cs" data-trim contenteditable>
+Observable.Range(1, 10)
+	.ObserveOn(scheduler)
+	.Subscribe(p => Console.WriteLine(p));
+                    </code></pre>
+				</section>
+				<section>
+					<h3>And now to some examples</h3>
 				</section>
 			</div>
 
