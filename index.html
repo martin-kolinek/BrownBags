@@ -60,6 +60,17 @@
           </p>
         </section>
         <section>
+          <h3>ReactiveX</h3>
+          <p><a href="http://reactivex.io">http://reactivex.io</a></p>
+          <p>Implementations for different languages</p>
+          <ul>
+            <li>RxJava</li>
+            <li>Rx.NET</li>
+            <li>RxJS</li>
+          </ul>
+          <p>Inspired by functional reactive programming</p>
+        </section>
+        <section>
           <h3>Examples</h3>
         </section>
         <section>
@@ -67,6 +78,66 @@
           <img src="comm.svg" />
           <p>Display data for finished analyses</p>
           <p>Avoid remembering all events forever</p>
+        </section>
+        <section>
+          <h3>Original solution</h3>
+          <img src="original.svg" />
+          <p>Different representations</p>
+          <p>Code duplicity</p>
+          <p>What if we subscribe too late?</p>
+        </section>
+        <section>
+          <h3>Rx Solution</h3>
+          <p>Unify the two representations</p>
+          <pre><code language="cs" data-trim contenteditable>
+IObservable&lt;MeasurementPoint&gt;
+// ADD MORE
+          </code></pre>
+          <p>Treat both cases as a stream of events
+          <p>Selection of displayed analysis is also done using Rx</p>
+        </section>
+        <section>
+          <h3>Advantages</h3>
+          <p>Replaying of events more or less for free</p>
+          <pre><code language="cs" data-trim contenteditable>
+IObservable&lt;MeasurementPoint&gt;
+// ADD MORE
+          </code></pre>
+          Throttling of too much data for free
+          <pre><code language="cs" data-trim contenteditable>
+IObservable&lt;MeasurementPoint&gt;
+// ADD MORE
+          </code></pre>
+        </section>
+        <section>
+          <h3>Complications</h3>
+          <p>No stack traces</p>
+          <p>Standard debugging approaches inefficient</p>
+          <p>Different levels of experience with Rx</p>
+          <p>Code modified many times with different requirements</p>
+        </section>
+        <section>
+          <h3>Next steps</h3>
+          <p>Reduce the length of reactive networks</p>
+          <p>
+        </section>
+        <section>
+          <h3>Lessons learned</h3>
+          <p>If there are only a few people familiar with reactive programming, make them do careful code reviews</p>
+          <p>Log often</p>
+          <p>Be careful about feedback loops</p>
+          <p>More smaller reactive networks can be easier to understand</p>
+          <p>Utilize Hot and Cold observables</p>
+        </section>
+        <section>
+          <h3>
+            Should you use Rx in your project?
+          </h3>
+          <p>Do you need reactivity?</p>
+          <p>Still my favorite approach to reactive systems</p>
+        </section>
+        <section>
+          <h2>That is all from me</h2>
         </section>
 </div>
 
