@@ -89,12 +89,22 @@
         <section>
           <h3>Rx Solution</h3>
           <p>Unify the two representations</p>
-          <pre><code language="cs" data-trim contenteditable>
-IObservable&lt;MeasurementPoint&gt;
-// ADD MORE
+          <pre><code language="cs" data-trim>
+Task&lt;IReadOnlyCollection&lt;MeasurementPoint&gt;&gt; LoadDatabaseData(long analysisId);
+IObservable&lt;MeasurementPoint&gt; GetDataEvents(long anaysisId);
+          
+IObservable&lt;MeasurementPoint&gt; measurementPoints = null;
+GetDataEvents(analysisId).Merge(
+    Observable.FromAsync(
+        ()=&gt; LoadDatabaseData(analysisId)).SelectMany(p =&gt; p.ToObservable()));
           </code></pre>
           <p>Treat both cases as a stream of events
           <p>Selection of displayed analysis is also done using Rx</p>
+          <pre><code language="cs" data-trim>
+IObservable&lt;long&gt; SelectedAnalysis { get; }
+
+SelectedAnalysis.Select(GetAnalysisData).Switch();
+          </code></pre>
         </section>
         <section>
           <h3>Advantages</h3>
