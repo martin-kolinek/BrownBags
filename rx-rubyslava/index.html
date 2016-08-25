@@ -104,7 +104,7 @@ Task&lt;IReadOnlyCollection&lt;MeasurementPoint&gt;&gt; LoadDatabaseData(long an
 IObservable&lt;MeasurementPoint&gt; GetDataEvents(long anaysisId);
           
 IObservable&lt;MeasurementPoint&gt; measurementPoints = null;
-GetDataEvents(analysisId).Merge(
+GetDataEvents(analysisId).Concat(
   Observable.FromAsync(
     ()=&gt; LoadDatabaseData(analysisId)).SelectMany(p =&gt; p.ToObservable()));
           </code></pre>
